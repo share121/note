@@ -39,9 +39,6 @@
         background-color: transparent;
         cursor: pointer;
       }
-      .toolbar button:hover {
-        background-color: #eee;
-      }
       .toolbar input {
         height: 100%;
         border: 1px solid #ccc;
@@ -49,7 +46,15 @@
         background-color: transparent;
         cursor: pointer;
       }
-      .toolbar input:hover {
+      .toolbar a {
+        padding: 5px 10px;
+        border: 1px solid #ccc;
+        border-top: none;
+        background-color: transparent;
+        cursor: pointer;
+        color: #000;
+      }
+      .toolbar :hover {
         background-color: #eee;
       }
     </style>
@@ -81,6 +86,13 @@
         <button onmousedown="keepFocus(event)" onclick="startScroll(event)">
           开始滚动
         </button>
+        <a
+          onmousedown="keepFocus(event)"
+          href="https://github.com/share121/note"
+          target="_blank"
+        >
+          Github
+        </a>
       </div>
     </div>
     <script>
