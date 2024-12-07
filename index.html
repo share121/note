@@ -1,249 +1,231 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>便签</title>
-    <style>
-      body {
-        margin: 0;
-      }
-      * {
-        box-sizing: border-box;
-      }
-      .container {
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-      }
-      #editor {
-        flex: 1;
-        border: none;
-        overflow-wrap: break-word;
-        overflow-y: auto;
-        outline: none;
-        font-size: 24px;
-        line-height: 1;
-      }
-      ::-webkit-scrollbar {
-        display: none;
-      }
-      .toolbar {
-        display: flex;
-        border-top: 1px solid #ccc;
-      }
-      .toolbar button {
-        padding: 5px 10px;
-        border: 1px solid #ccc;
-        border-top: none;
-        background-color: transparent;
-        cursor: pointer;
-      }
-      .toolbar input {
-        height: 100%;
-        border: 1px solid #ccc;
-        border-top: none;
-        background-color: transparent;
-        cursor: pointer;
-      }
-      .toolbar a {
-        padding: 5px 10px;
-        border: 1px solid #ccc;
-        border-top: none;
-        background-color: transparent;
-        cursor: pointer;
-        color: #000;
-      }
-      .toolbar :hover {
-        background-color: #eee;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div id="editor" contenteditable></div>
-      <div class="toolbar">
-        <button onmousedown="keepFocus(event)" onclick="boldText()">
-          加粗
-        </button>
-        <button onmousedown="keepFocus(event)" onclick="italicText()">
-          斜体
-        </button>
-        <input
-          type="color"
-          title="字体颜色"
-          onmousedown="keepFocus(event)"
-          oninput="changeColor(event)"
-          onclick="changeColor(event)"
-        />
-        <input
-          type="file"
-          title="画视频"
-          onmousedown="keepFocus(event)"
-          onchange="uploadFiles(event)"
-          accept="video/*"
-        />
-        <button onmousedown="keepFocus(event)" onclick="startScroll(event)">
-          开始滚动
-        </button>
-        <a
-          onmousedown="keepFocus(event)"
-          href="https://github.com/share121/note"
-          target="_blank"
-        >
-          Github
-        </a>
-        <a
-          onmousedown="keepFocus(event)"
-          href="https://space.bilibili.com/626843261"
-          target="_blank"
-        >
-          bilibili
-        </a>
-      </div>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>便签</title>
+  <style>
+    body {
+      margin: 0;
+    }
+
+    .container {
+      display: flex;
+      -ms-flex-direction: column;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    #editor {
+      -ms-flex: 1;
+      flex: 1;
+      border: none;
+      overflow-wrap: break-word;
+      overflow-y: scroll;
+      outline: none;
+      font-size: 2px;
+      line-height: 1;
+    }
+
+    .toolbar {
+      display: flex;
+      border-top: 1px solid #ccc;
+      overflow-x: auto;
+    }
+
+    .toolbar a {
+      color: #000;
+    }
+
+    .toolbar input[type="color"] {
+      padding: 0;
+    }
+
+    .toolbar :hover {
+      background-color: #eee;
+    }
+
+    .toolbar * {
+      padding: 4px 8px;
+      border: none;
+      border-right: 1px solid #ccc;
+      height: 100%;
+      background-color: transparent;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div id="editor" contenteditable></div>
+    <div class="toolbar">
+      <button onmousedown="keepFocus(event)" onclick="boldText()">
+        加粗
+      </button>
+      <button onmousedown="keepFocus(event)" onclick="italicText()">
+        斜体
+      </button>
+      <input type="color" title="字体颜色" onmousedown="keepFocus(event)" oninput="changeColor(event)"
+        onclick="changeColor(event)" />
+      <input type="file" title="画视频" onmousedown="keepFocus(event)" onchange="uploadFiles(event)" accept="video/*" />
+      <div class="progress-bar">进度：0.00%</div>
+      <button id="startBtn" onmousedown="keepFocus(event)" onclick="startScroll(event)">
+        开始滚动
+      </button>
+      <a onmousedown="keepFocus(event)" href="https://github.com/share121/note" target="_blank">
+        Github
+      </a>
+      <a onmousedown="keepFocus(event)" href="https://space.bilibili.com/626843261" target="_blank">
+        bilibili
+      </a>
     </div>
-    <script>
-      const editor = document.querySelector("#editor");
-      const fontSize = 24;
-      let lineEachFrame = 0;
-      let timer;
-      function keepFocus(e) {
-        e.preventDefault();
+  </div>
+  <script>
+    const editor = document.querySelector("#editor");
+    const startBtn = document.querySelector("#startBtn");
+    const progressBar = document.querySelector(".progress-bar");
+    const fontSize = parseFloat(getComputedStyle(editor).fontSize);
+    const fps = 60;
+    const charSet = "ｓｈａｒｅ１２１";
+    let lineEachFrame = 1;
+    let timer;
+
+    function keepFocus(event) {
+      event.preventDefault();
+    }
+
+    function startScroll() {
+      if (timer) {
+        startBtn.textContent = "开始滚动";
+        cancelAnimationFrame(timer);
+        timer = null;
+        return;
       }
-      function startScroll(event) {
-        if (timer) {
-          event.target.innerText = "开始滚动";
-          cancelAnimationFrame(timer);
-          timer = null;
-          return;
-        }
-        event.target.innerText = "停止滚动";
-        const d = lineEachFrame * fontSize;
-        let cur = 0;
-        timer = requestAnimationFrame(function f() {
-          cur += d;
-          editor.scrollTo({ top: cur, behavior: "instant" });
-          timer = requestAnimationFrame(f);
-        });
-      }
-      function boldText() {
-        document.execCommand("bold");
-      }
-      function italicText() {
-        document.execCommand("italic");
-      }
-      function changeColor(event) {
-        document.execCommand("foreColor", false, event.target.value);
-      }
-      function grayToChar(gray) {
-        if (gray < 128) return "龍";
-        return "　";
-      }
-      function rgba2gray(red, green, blue, alpha) {
-        return (red * 0.299 + green * 0.587 + blue * 0.114) * (alpha / 255);
-      }
-      function uploadFiles(event) {
-        const file = event.target.files[0];
-        const url = URL.createObjectURL(file);
-        const video = document.createElement("video");
-        video.src = url;
-        video.muted = true;
-        video.playbackRate = 1;
-        video.play();
-        const canvas = document.createElement("canvas");
-        canvas.width = editor.clientWidth;
-        canvas.height = editor.clientHeight;
-        const ctx = canvas.getContext("2d", {
-          willReadFrequently: true,
-        });
-        video.addEventListener("canplaythrough", () => {
-          // function draw() {
-          //   ctx.clearRect(0, 0, canvas.width, canvas.height);
-          //   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          //   let data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-          //   /** @type {number[][][]} */
-          //   let dataComp = [];
-          //   /** @type {number[][][][]} */
-          //   const chunks = [];
-          //   for (let i = 0; i < data.length; i += 4) {
-          //     dataComp.push([data[i], data[i + 1], data[i + 2], data[i + 3]]);
-          //   }
-          //   data = null;
-          //   let j = 0;
-          //   for (let i = 0; i < dataComp.length; i += canvas.width, j++) {
-          //     dataComp[j] = dataComp.slice(i, i + canvas.width);
-          //   }
-          //   dataComp.length = j;
-          //   // 把图片分成 fontSize * fontSize 的小块
-          //   for (let i = 0; i < dataComp.length; i += fontSize) {
-          //     for (let j = 0; j < dataComp[i].length; j += fontSize) {
-          //       let chunk = dataComp.slice(i, i + fontSize);
-          //       for (let k = 0; k < chunk.length; k++) {
-          //         chunk[k] = chunk[k].slice(j, j + fontSize);
-          //       }
-          //       chunks.push(chunk);
-          //     }
-          //   }
-          //   dataComp = null;
-          //   for (let i = 0; i < chunks.length; i++) {
-          //     const chunk = chunks[i];
-          //     const grays = chunk.flatMap((row) =>
-          //       row.map((pixel) => rgba_to_gray(pixel))
-          //     );
-          //     const avgGray = grays.reduce((a, b) => a + b, 0) / grays.length;
-          //     const char = avgGray < 128 ? "龍" : "　";
-          //     html += char;
-          //     if ((i + 1) % xTextNum === 0) html += "<br>";
-          //   }
-          //   if (video.paused) editor.innerHTML = html;
-          //   else requestAnimationFrame(draw);
-          // }
-          let html = "";
-          lineEachFrame = 0;
-          let isFirstFrame = true;
-          function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const { data, height, width } = ctx.getImageData(
-              0,
-              0,
-              canvas.width,
-              canvas.height,
-            );
-            for (let y = 0; y < height; y += fontSize) {
-              for (let x = 0; x < width - fontSize; x += fontSize) {
-                let rSum = 0, gSum = 0, bSum = 0, aSum = 0;
-                let count = 0;
-                for (let dy = 0; dy < fontSize && y + dy < height; dy++) {
-                  for (let dx = 0; dx < fontSize && x + dx < width; dx++) {
-                    const index = ((y + dy) * width + (x + dx)) * 4;
-                    rSum += data[index];
-                    gSum += data[index + 1];
-                    bSum += data[index + 2];
-                    aSum += data[index + 3];
-                    count++;
-                  }
-                }
-                const avgR = rSum / count;
-                const avgG = gSum / count;
-                const avgB = bSum / count;
-                const avgA = aSum / count;
-                const avgGray = rgba2gray(avgR, avgG, avgB, avgA);
-                const char = grayToChar(avgGray);
-                html += char;
-              }
-              html += "<br>";
-              if (isFirstFrame) {
-                lineEachFrame++;
+      startBtn.textContent = "停止滚动";
+      const d = lineEachFrame * fontSize;
+      let cur = 0;
+      const maxH = editor.scrollHeight - editor.clientHeight;
+      timer = requestAnimationFrame(function f() {
+        cur += d;
+        editor.scrollTo({ top: cur, behavior: "instant" });
+        if (cur >= maxH) startScroll();
+        else timer = requestAnimationFrame(f);
+      });
+    }
+
+    function boldText() {
+      document.execCommand("bold");
+    }
+
+    function italicText() {
+      document.execCommand("italic");
+    }
+
+    function changeColor(event) {
+      document.execCommand("foreColor", false, event.target.value);
+    }
+
+    let index = -1;
+    function colorToChar(r, g, b, a) {
+      index++;
+      const gray = rgba2gray(r, g, b, a);
+      if (gray < 128) return charSet[index % charSet.length];
+      return "　";
+    }
+
+    function onNextFrame() {
+      index = -1;
+    }
+
+    function rgba2gray(r, g, b, a) {
+      return (r * 0.299 + g * 0.587 + b * 0.114) * (a / 255);
+    }
+
+    function getVideo(event) {
+      const file = event.target.files[0];
+      const url = URL.createObjectURL(file);
+      const video = document.createElement("video");
+      video.src = url;
+      video.muted = true;
+      video.playbackRate = 1;
+      return video;
+    }
+
+    function seeked(video, pos) {
+      return new Promise((resolve) => {
+        video.currentTime = pos;
+        video.addEventListener("seeked", resolve, { once: true });
+      });
+    }
+
+    function canplaythrough(video) {
+      return new Promise((resolve) => {
+        video.addEventListener("canplaythrough", resolve, { once: true });
+      });
+    }
+
+    function getCanvsas(width, height) {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      return { canvas, ctx };
+    }
+
+    async function uploadFiles(event) {
+      const video = getVideo(event);
+      const { canvas, ctx } = getCanvsas(editor.clientWidth, editor.clientHeight);
+      await canplaythrough(video);
+      let html = "";
+      lineEachFrame = Math.ceil(canvas.height / fontSize);
+      const colEachFrame = Math.floor(canvas.width / fontSize);
+      const step = 1 / fps;
+      const count = fontSize * fontSize;
+      for (
+        let curTime = 0;
+        curTime < video.duration;
+        await seeked(video, curTime += step)
+      ) {
+        onNextFrame()
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const { data, height, width } = ctx.getImageData(
+          0,
+          0,
+          canvas.width,
+          canvas.height,
+        );
+        progressBar.textContent = `进度：${(video.currentTime * 100 / video.duration).toFixed(2)
+          }%`;
+        for (let y = 0; y < height; y += fontSize) {
+          for (let x = 0; x < width - fontSize; x += fontSize) {
+            let rSum = 0, gSum = 0, bSum = 0, aSum = 0;
+            for (let dy = 0; dy < fontSize; dy++) {
+              for (let dx = 0; dx < fontSize; dx++) {
+                const index = ((y + dy) * width + (x + dx)) * 4;
+                rSum += data[index];
+                gSum += data[index + 1];
+                bSum += data[index + 2];
+                aSum += data[index + 3];
               }
             }
-            isFirstFrame = false;
-            if (video.paused) editor.innerHTML = html;
-            else requestAnimationFrame(draw);
+            html += colorToChar(
+              rSum / count,
+              gSum / count,
+              bSum / count,
+              aSum / count,
+            );
           }
-          draw();
-        });
+          html += "<br>";
+        }
       }
-    </script>
-  </body>
+      editor.innerHTML = html;
+      progressBar.textContent = "进度：100.00%";
+    }
+  </script>
+</body>
+
 </html>
