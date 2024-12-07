@@ -10,6 +10,10 @@
       margin: 0;
     }
 
+    * {
+      box-sizing: border-box;
+    }
+
     .container {
       display: flex;
       -ms-flex-direction: column;
@@ -70,15 +74,17 @@
       </button>
       <input type="color" title="字体颜色" onmousedown="keepFocus(event)" oninput="changeColor(event)"
         onclick="changeColor(event)" />
-      <input type="file" title="画视频" onmousedown="keepFocus(event)" onchange="uploadFiles(event)" accept="video/*" />
+      <input type="file" title="画视频" onchange="uploadFiles(event)" accept="video/*" />
       <div class="progress-bar">进度：0.00%</div>
-      <button id="startBtn" onmousedown="keepFocus(event)" onclick="startScroll(event)">
+      <button id="startBtn" onclick="startScroll(event)">
         开始滚动
       </button>
-      <a onmousedown="keepFocus(event)" href="https://github.com/share121/note" target="_blank">
+      <input type="number" title="屏幕刷新率" placeholder="屏幕刷新率" value="60" oninput="changeFps(event)" />
+      <input type="number" title="字体大小" placeholder="字体大小" value="10" oninput="changeFontSize(event)" />
+      <a href="https://github.com/share121/note" target="_blank">
         Github
       </a>
-      <a onmousedown="keepFocus(event)" href="https://space.bilibili.com/626843261" target="_blank">
+      <a href="https://space.bilibili.com/626843261" target="_blank">
         bilibili
       </a>
     </div>
@@ -87,14 +93,23 @@
     const editor = document.querySelector("#editor");
     const startBtn = document.querySelector("#startBtn");
     const progressBar = document.querySelector(".progress-bar");
-    const fontSize = parseFloat(getComputedStyle(editor).fontSize);
-    const fps = 60;
+    let fontSize = parseFloat(getComputedStyle(editor).fontSize);
+    let fps = 60;
     const charSet = "ｓｈａｒｅ１２１";
     let lineEachFrame = 1;
     let timer;
 
     function keepFocus(event) {
       event.preventDefault();
+    }
+
+    function changeFps(event) {
+      fps = event.target.value;
+    }
+
+    function changeFontSize(event) {
+      editor.style.fontSize = event.target.value + "px";
+      fontSize = parseFloat(getComputedStyle(editor).fontSize);
     }
 
     function startScroll() {
