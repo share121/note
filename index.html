@@ -139,10 +139,10 @@
           editorFontCount = 0;
           editorFontLineCount = 0;
           const canvas = document.createElement("canvas");
-          canvas.width = editor.clientWidth;
-          canvas.height = editor.clientHeight;
+          canvas.width = Math.floor(editor.clientWidth / fontSize);
+          canvas.height = Math.ceil(editor.clientHeight / fontSize);
           const ctx = canvas.getContext("2d", { willReadFrequently: true });
-          lineEachFrame = Math.ceil(canvas.height / fontSize);
+          ctx.imageSmoothingQuality = "high";
           video.currentTime = 0;
           video.play();
           timer = requestAnimationFrame(function f() {
@@ -162,30 +162,16 @@
               (video.currentTime * 100) /
               video.duration
             ).toFixed(2)}%`;
-            for (let y = 0; y < height; y += fontSize) {
+            for (let y = 0; y < height; y++) {
               editorFontLineCount++;
-              for (let x = 0; x < width - fontSize; x += fontSize) {
+              for (let x = 0; x < width; x++) {
                 editorFontCount++;
-                let rSum = 0,
-                  gSum = 0,
-                  bSum = 0,
-                  aSum = 0;
-                let count = 0;
-                for (let dy = 0; dy < fontSize && y + dy < height; dy++) {
-                  for (let dx = 0; dx < fontSize && x + dx < width; dx++) {
-                    const index = ((y + dy) * width + (x + dx)) * 4;
-                    rSum += data[index];
-                    gSum += data[index + 1];
-                    bSum += data[index + 2];
-                    aSum += data[index + 3];
-                    count++;
-                  }
-                }
+                const index = (y * width + x) * 4;
                 html += colorToChar(
-                  rSum / count,
-                  gSum / count,
-                  bSum / count,
-                  aSum / count
+                  data[index],
+                  data[index + 1],
+                  data[index + 2],
+                  data[index + 3]
                 );
               }
               html += "<br>";
