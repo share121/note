@@ -1,319 +1,341 @@
 ﻿<!DOCTYPE html>
 <html lang="zh-CN">
-
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>便签</title>
-  <style>
-    body {
-      margin: 0;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    .container {
-      display: flex;
-      -ms-flex-direction: column;
-      flex-direction: column;
-      height: 100vh;
-    }
-
-    #editor {
-      -ms-flex: 1;
-      flex: 1;
-      border: none;
-      overflow-wrap: break-word;
-      overflow-y: scroll;
-      outline: none;
-      font-size: 12px;
-      line-height: 1;
-      font-weight: 900;
-    }
-
-    .toolbar {
-      display: flex;
-      border-top: 1px solid #ccc;
-    }
-
-    .toolbar a {
-      color: #000;
-    }
-
-    .toolbar :hover {
-      background-color: #eee;
-    }
-
-    .toolbar * {
-      height: 100%;
-      padding: 4px 8px;
-      border: none;
-      border-right: 1px solid #ccc;
-      background-color: transparent;
-      cursor: pointer;
-    }
-
-    .realtime-label {
-      display: flex;
-      align-items: center;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="container">
-    <div id="editor" contenteditable spellcheck="false" translate="no"></div>
-    <div class="toolbar">
-      <button onmousedown="keepFocus(event)" onclick="boldText()">
-        加粗
-      </button>
-      <button onmousedown="keepFocus(event)" onclick="italicText()">
-        斜体
-      </button>
-      <input type="color" title="字体颜色" onmousedown="keepFocus(event)" oninput="changeColor(event)"
-        onclick="changeColor(event)" />
-      <input type="file" title="画视频" onchange="uploadFiles(event)" accept="video/*" />
-      <div class="progress-bar">进度：0.00%</div>
-      <label class="realtime-label">
-        实时
-        <input type="checkbox" checked onchange="toggleRealtime(event)" />
-      </label>
-      <button id="startBtn" onclick="startScroll(event)">
-        开始滚动
-      </button>
-      <a href="https://github.com/share121/note" target="_blank">
-        Github
-      </a>
-      <a href="https://space.bilibili.com/626843261" target="_blank">
-        bilibili
-      </a>
-      <div id="countEl">0 字</div>
-      <div id="lineCountEl">1 行</div>
-    </div>
-  </div>
-  <script>
-    const editor = document.querySelector("#editor");
-    const startBtn = document.querySelector("#startBtn");
-    const progressBar = document.querySelector(".progress-bar");
-    const countEl = document.querySelector("#countEl");
-    const lineCountEl = document.querySelector("#lineCountEl");
-    const fontSize = parseInt(getComputedStyle(editor).fontSize);
-    const fps = 60;
-    const charSet = "关注ｓｈａｒｅ１２１";
-    let lineEachFrame = 1;
-    let timer;
-    let video;
-    let isRealtime = true;
-    let editorFontCount = 0;
-    let editorFontLineCount = 0;
-
-    window.addEventListener("obsRecordingPaused", () => {
-      if (timer) startScroll()
-    });
-    window.addEventListener("obsRecordingStopping", () => {
-      if (timer) startScroll()
-    });
-
-    function keepFocus(e) {
-      e.preventDefault();
-    }
-
-    function startScroll() {
-      if (timer) {
-        window.obsstudio?.stopRecording();
-        startBtn.textContent = "开始滚动";
-        cancelAnimationFrame(timer);
-        timer = null;
-        return;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>便签</title>
+    <style>
+      body {
+        margin: 0;
       }
-      window.obsstudio?.startRecording();
-      startBtn.textContent = "停止滚动";
-      if (isRealtime) {
-        editorFontCount = 0;
-        editorFontLineCount = 0;
+
+      * {
+        box-sizing: border-box;
+      }
+
+      .container {
+        display: flex;
+        -ms-flex-direction: column;
+        flex-direction: column;
+        height: 100vh;
+      }
+
+      #editor {
+        -ms-flex: 1;
+        flex: 1;
+        border: none;
+        overflow-wrap: break-word;
+        overflow-y: scroll;
+        outline: none;
+        font-size: 12px;
+        line-height: 1;
+        font-weight: 900;
+      }
+
+      .toolbar {
+        display: flex;
+        border-top: 1px solid #ccc;
+      }
+
+      .toolbar a {
+        color: #000;
+      }
+
+      .toolbar :hover {
+        background-color: #eee;
+      }
+
+      .toolbar * {
+        height: 100%;
+        padding: 4px 8px;
+        border: none;
+        border-right: 1px solid #ccc;
+        background-color: transparent;
+        cursor: pointer;
+      }
+
+      .realtime-label {
+        display: flex;
+        align-items: center;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div id="editor" contenteditable spellcheck="false" translate="no"></div>
+      <div class="toolbar">
+        <button onmousedown="keepFocus(event)" onclick="boldText()">
+          加粗
+        </button>
+        <button onmousedown="keepFocus(event)" onclick="italicText()">
+          斜体
+        </button>
+        <input
+          type="color"
+          title="字体颜色"
+          onmousedown="keepFocus(event)"
+          oninput="changeColor(event)"
+          onclick="changeColor(event)"
+        />
+        <input
+          type="file"
+          title="画视频"
+          onchange="uploadFiles(event)"
+          accept="video/*"
+        />
+        <div class="progress-bar">进度：0.00%</div>
+        <label class="realtime-label">
+          实时
+          <input type="checkbox" checked onchange="toggleRealtime(event)" />
+        </label>
+        <button id="startBtn" onclick="startScroll(event)">开始滚动</button>
+        <a href="https://github.com/share121/note" target="_blank"> Github </a>
+        <a href="https://space.bilibili.com/626843261" target="_blank">
+          bilibili
+        </a>
+        <div id="countEl">0 字</div>
+        <div id="lineCountEl">1 行</div>
+      </div>
+    </div>
+    <script>
+      const editor = document.querySelector("#editor");
+      const startBtn = document.querySelector("#startBtn");
+      const progressBar = document.querySelector(".progress-bar");
+      const countEl = document.querySelector("#countEl");
+      const lineCountEl = document.querySelector("#lineCountEl");
+      const fontSize = parseInt(getComputedStyle(editor).fontSize);
+      const fps = 60;
+      const charSet = "关注ｓｈａｒｅ１２１";
+      let lineEachFrame = 1;
+      let timer;
+      let video;
+      let isRealtime = true;
+      let editorFontCount = 0;
+      let editorFontLineCount = 0;
+
+      window.addEventListener("obsRecordingPaused", () => {
+        if (timer) startScroll();
+      });
+      window.addEventListener("obsRecordingStopping", () => {
+        if (timer) startScroll();
+      });
+
+      function keepFocus(e) {
+        e.preventDefault();
+      }
+
+      function startScroll() {
+        if (timer) {
+          window.obsstudio?.stopRecording();
+          startBtn.textContent = "开始滚动";
+          cancelAnimationFrame(timer);
+          timer = null;
+          return;
+        }
+        window.obsstudio?.startRecording();
+        startBtn.textContent = "停止滚动";
+        if (isRealtime) {
+          editorFontCount = 0;
+          editorFontLineCount = 0;
+          const canvas = document.createElement("canvas");
+          canvas.width = editor.clientWidth;
+          canvas.height = editor.clientHeight;
+          const ctx = canvas.getContext("2d", { willReadFrequently: true });
+          lineEachFrame = Math.ceil(canvas.height / fontSize);
+          video.currentTime = 0;
+          video.play();
+          timer = requestAnimationFrame(function f() {
+            let html = "";
+            index = -1;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const { data, height, width } = ctx.getImageData(
+              0,
+              0,
+              canvas.width,
+              canvas.height
+            );
+            countEl.textContent = editorFontCount + " 字";
+            lineCountEl.textContent = editorFontLineCount + " 行";
+            progressBar.textContent = `进度：${(
+              (video.currentTime * 100) /
+              video.duration
+            ).toFixed(2)}%`;
+            for (let y = 0; y < height; y += fontSize) {
+              editorFontLineCount++;
+              for (let x = 0; x < width - fontSize; x += fontSize) {
+                editorFontCount++;
+                let rSum = 0,
+                  gSum = 0,
+                  bSum = 0,
+                  aSum = 0;
+                let count = 0;
+                for (let dy = 0; dy < fontSize && y + dy < height; dy++) {
+                  for (let dx = 0; dx < fontSize && x + dx < width; dx++) {
+                    const index = ((y + dy) * width + (x + dx)) * 4;
+                    rSum += data[index];
+                    gSum += data[index + 1];
+                    bSum += data[index + 2];
+                    aSum += data[index + 3];
+                    count++;
+                  }
+                }
+                html += colorToChar(
+                  rSum / count,
+                  gSum / count,
+                  bSum / count,
+                  aSum / count
+                );
+              }
+              html += "<br>";
+            }
+            editor.innerHTML = html;
+            if (video.currentTime >= video.duration) startScroll();
+            else timer = requestAnimationFrame(f);
+          });
+        } else {
+          const d = lineEachFrame * fontSize;
+          let cur = 0;
+          const maxH = editor.scrollHeight - editor.clientHeight;
+          timer = requestAnimationFrame(function f() {
+            cur += d;
+            editor.scrollTo({ top: cur, behavior: "instant" });
+            if (cur >= maxH) startScroll();
+            else timer = requestAnimationFrame(f);
+          });
+        }
+      }
+
+      function toggleRealtime(event) {
+        isRealtime = event.target.checked;
+      }
+
+      function boldText() {
+        document.execCommand("bold");
+      }
+
+      function italicText() {
+        document.execCommand("italic");
+      }
+
+      function changeColor(event) {
+        document.execCommand("foreColor", false, event.target.value);
+      }
+
+      let index = -1;
+
+      function colorToChar(r, g, b, a) {
+        index++;
+        const font = charSet[index % charSet.length];
+        if (isRealtime) {
+          // if (gray > 200) return "　";
+          if (a === 255) {
+            return `<span style="color:rgb(${r},${g},${b})">${font}</span>`;
+          }
+          return `<span style="color:rgba(${r},${g},${b},${
+            a / 255
+          })">${font}</span>`;
+        }
+        const gray = rgba2gray(r, g, b, a);
+        if (gray < 128) return "　";
+        return font;
+      }
+
+      function rgba2gray(red, green, blue, alpha) {
+        return (red * 0.299 + green * 0.587 + blue * 0.114) * (alpha / 255);
+      }
+
+      function getVideo(event) {
+        const file = event.target.files[0];
+        const url = URL.createObjectURL(file);
+        const video = document.createElement("video");
+        video.src = url;
+        video.muted = true;
+        video.playbackRate = 1;
+        return video;
+      }
+
+      function seeked(video) {
+        return new Promise((resolve) =>
+          video.addEventListener("seeked", resolve, { once: true })
+        );
+      }
+
+      function uploadFiles(event) {
+        video = getVideo(event);
+        if (isRealtime) return;
         const canvas = document.createElement("canvas");
         canvas.width = editor.clientWidth;
         canvas.height = editor.clientHeight;
         const ctx = canvas.getContext("2d", { willReadFrequently: true });
-        lineEachFrame = Math.ceil(canvas.height / fontSize);
-        video.currentTime = 0;
-        video.play()
-        timer = requestAnimationFrame(function f() {
-          let html = "";
-          index = -1;
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const { data, height, width } = ctx.getImageData(
-            0,
-            0,
-            canvas.width,
-            canvas.height,
-          );
-          countEl.textContent = editorFontCount + " 字";
-          lineCountEl.textContent = editorFontLineCount + " 行";
-          progressBar.textContent = `进度：${(video.currentTime * 100 / video.duration).toFixed(2)
-            }%`;
-          for (let y = 0; y < height; y += fontSize) {
-            editorFontLineCount++;
-            for (let x = 0; x < width - fontSize; x += fontSize) {
-              editorFontCount++;
-              let rSum = 0, gSum = 0, bSum = 0, aSum = 0;
-              let count = 0;
-              for (let dy = 0; dy < fontSize && y + dy < height; dy++) {
-                for (let dx = 0; dx < fontSize && x + dx < width; dx++) {
-                  const index = ((y + dy) * width + (x + dx)) * 4;
-                  rSum += data[index];
-                  gSum += data[index + 1];
-                  bSum += data[index + 2];
-                  aSum += data[index + 3];
-                  count++;
-                }
-              }
-              html += colorToChar(
-                rSum / count,
-                gSum / count,
-                bSum / count,
-                aSum / count,
+        video.addEventListener(
+          "canplaythrough",
+          async () => {
+            let html = "";
+            lineEachFrame = Math.ceil(canvas.height / fontSize);
+            const step = 1 / fps;
+            video.currentTime = 0;
+            editorFontCount = 0;
+            editorFontLineCount = 0;
+            for (
+              let curTime = 0;
+              curTime < video.duration;
+              video.currentTime = curTime += step
+            ) {
+              index = -1;
+              await seeked(video);
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              const { data, height, width } = ctx.getImageData(
+                0,
+                0,
+                canvas.width,
+                canvas.height
               );
-            }
-            html += "<br>";
-          }
-          editor.innerHTML = html;
-          if (video.currentTime >= video.duration) startScroll();
-          else timer = requestAnimationFrame(f);
-        });
-      } else {
-        const d = lineEachFrame * fontSize;
-        let cur = 0;
-        const maxH = editor.scrollHeight - editor.clientHeight;
-        timer = requestAnimationFrame(function f() {
-          cur += d;
-          editor.scrollTo({ top: cur, behavior: "instant" });
-          if (cur >= maxH) startScroll();
-          else timer = requestAnimationFrame(f);
-        });
-      }
-    }
-
-    function toggleRealtime(event) {
-      isRealtime = event.target.checked;
-    }
-
-    function boldText() {
-      document.execCommand("bold");
-    }
-
-    function italicText() {
-      document.execCommand("italic");
-    }
-
-    function changeColor(event) {
-      document.execCommand("foreColor", false, event.target.value);
-    }
-
-    let index = -1;
-
-    function colorToChar(r, g, b, a) {
-      index++
-      const font = charSet[index % charSet.length]
-      if (isRealtime) {
-        // if (gray > 200) return "　";
-        if (a === 255) return `<span style="color:rgb(${r},${g},${b})">${font}</span>`
-        return `<span style="color:rgba(${r},${g},${b},${a / 255})">${font}</span>`;
-      }
-      const gray = rgba2gray(r, g, b, a);
-      if (gray < 128) return "　";
-      return font
-    }
-
-    function rgba2gray(red, green, blue, alpha) {
-      return (red * 0.299 + green * 0.587 + blue * 0.114) * (alpha / 255);
-    }
-
-    function getVideo(event) {
-      const file = event.target.files[0];
-      const url = URL.createObjectURL(file);
-      const video = document.createElement("video");
-      video.src = url;
-      video.muted = true;
-      video.playbackRate = 0.1;
-      return video;
-    }
-
-    function seeked(video) {
-      return new Promise((resolve) =>
-        video.addEventListener("seeked", resolve, { once: true })
-      );
-    }
-
-    function uploadFiles(event) {
-      video = getVideo(event);
-      if (isRealtime) return
-      const canvas = document.createElement("canvas");
-      canvas.width = editor.clientWidth;
-      canvas.height = editor.clientHeight;
-      const ctx = canvas.getContext("2d", { willReadFrequently: true });
-      video.addEventListener("canplaythrough", async () => {
-        let html = "";
-        lineEachFrame = Math.ceil(canvas.height / fontSize);
-        const step = 1 / fps;
-        video.currentTime = 0;
-        editorFontCount = 0;
-        editorFontLineCount = 0
-        for (
-          let curTime = 0;
-          curTime < video.duration;
-          video.currentTime = curTime += step
-        ) {
-          index = -1;
-          await seeked(video)
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const { data, height, width } = ctx.getImageData(
-            0,
-            0,
-            canvas.width,
-            canvas.height,
-          );
-          countEl.textContent = editorFontCount + " 字";
-          lineCountEl.textContent = editorFontLineCount + " 行";
-          progressBar.textContent = `进度：${(video.currentTime * 100 / video.duration).toFixed(2)
-            }%`;
-          for (let y = 0; y < height; y += fontSize) {
-            editorFontLineCount++
-            for (let x = 0; x < width - fontSize; x += fontSize) {
-              editorFontCount++
-              let rSum = 0, gSum = 0, bSum = 0, aSum = 0;
-              let count = 0;
-              for (let dy = 0; dy < fontSize && y + dy < height; dy++) {
-                for (let dx = 0; dx < fontSize && x + dx < width; dx++) {
-                  const index = ((y + dy) * width + (x + dx)) * 4;
-                  rSum += data[index];
-                  gSum += data[index + 1];
-                  bSum += data[index + 2];
-                  aSum += data[index + 3];
-                  count++;
+              countEl.textContent = editorFontCount + " 字";
+              lineCountEl.textContent = editorFontLineCount + " 行";
+              progressBar.textContent = `进度：${(
+                (video.currentTime * 100) /
+                video.duration
+              ).toFixed(2)}%`;
+              for (let y = 0; y < height; y += fontSize) {
+                editorFontLineCount++;
+                for (let x = 0; x < width - fontSize; x += fontSize) {
+                  editorFontCount++;
+                  let rSum = 0,
+                    gSum = 0,
+                    bSum = 0,
+                    aSum = 0;
+                  let count = 0;
+                  for (let dy = 0; dy < fontSize && y + dy < height; dy++) {
+                    for (let dx = 0; dx < fontSize && x + dx < width; dx++) {
+                      const index = ((y + dy) * width + (x + dx)) * 4;
+                      rSum += data[index];
+                      gSum += data[index + 1];
+                      bSum += data[index + 2];
+                      aSum += data[index + 3];
+                      count++;
+                    }
+                  }
+                  html += colorToChar(
+                    rSum / count,
+                    gSum / count,
+                    bSum / count,
+                    aSum / count
+                  );
                 }
+                html += "<br>";
               }
-              html += colorToChar(
-                rSum / count,
-                gSum / count,
-                bSum / count,
-                aSum / count,
-              );
             }
-            html += "<br>";
-          }
-        }
-        editor.innerHTML = html;
-        countEl.textContent = editorFontCount + " 字";
-        lineCountEl.textContent = editorFontLineCount + " 行";
-        progressBar.textContent = "进度：100.00%";
-      }, { once: true });
-    }
-  </script>
-</body>
-
+            editor.innerHTML = html;
+            countEl.textContent = editorFontCount + " 字";
+            lineCountEl.textContent = editorFontLineCount + " 行";
+            progressBar.textContent = "进度：100.00%";
+          },
+          { once: true }
+        );
+      }
+    </script>
+  </body>
 </html>
